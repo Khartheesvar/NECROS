@@ -18,7 +18,9 @@
 ## 🎬 Demo
 
 <p align="center">
-  <img src="assets/demo.gif" alt="NECROS demo" width="820">
+  <img src="assets/demo.gif" alt="NECROS dark UI: scenario selection, ROS 2 discovery, and a live robot hijack" width="1200">
+  <br>
+  <sub>4K demo (3840 × 2160) · <a href="assets/demo.gif?raw=true">View at full resolution</a></sub>
 </p>
 
 ---
