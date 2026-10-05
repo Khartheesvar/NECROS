@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  A hands-on cyber range for attacking and defending an autonomous robot fleet.
+  A hands-on cyber range for attacking and defending an autonomous robot fleet over ROS 2.
 </p>
 
 <p align="center">
