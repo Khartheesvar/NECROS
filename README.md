@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.png" alt="NECROS — Attacking &amp; Defending ROS 2" width="320">
+  <img src="assets/logo.png" alt="NECROS — Attacking &amp; Defending ROS 2" width="400">
 </p>
 
 <p align="center">
@@ -18,9 +18,7 @@
 ## 🎬 Demo
 
 <p align="center">
-  
-https://github.com/user-attachments/assets/0353f6df-d2f0-4dfd-a4a5-de8e7b7761c4
-
+  <img src="assets/demo.gif" alt="NECROS demo" width="820">
 </p>
 
 ---
