@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/logo.png" alt="NECROS — Attacking &amp; Defending ROS 2" width="400">
+  <img src="assets/Necros%20logo%20transparent%20background.png" alt="NECROS — Attacking &amp; Defending ROS 2" width="400">
 </p>
 
 <p align="center">
