@@ -1,0 +1,54 @@
+<policy version="0.2.0">
+  <!-- Scenario 2 "Blind Navigator" SROS2 access-control policy. Generated from the
+       live graph with `ros2 security generate_policy`. The dock AMR's only input is
+       its LIDAR: it both publishes /dock/scan (its sensor) and subscribes to it (for
+       navigation). Load-bearing rule: under enforcement no foreign identity may
+       publish /dock/scan, so the spoofed-scan attack is rejected and an
+       unauthenticated attacker cannot join the secured bus at all. -->
+  <enclaves>
+    <enclave path="/">
+      <profiles>
+        <profile node="dock_bridge" ns="/">
+          <services reply="ALLOW">
+            <service>~/describe_parameters</service>
+            <service>~/get_parameter_types</service>
+            <service>~/get_parameters</service>
+            <service>~/get_type_description</service>
+            <service>~/list_parameters</service>
+            <service>~/set_parameters</service>
+            <service>~/set_parameters_atomically</service>
+          </services>
+          <topics subscribe="ALLOW">
+            <topic>/dock/state</topic>
+          </topics>
+          <topics publish="ALLOW">
+            <topic>parameter_events</topic>
+            <topic>rosout</topic>
+          </topics>
+        </profile>
+        <profile node="dock_amr" ns="/dock">
+          <services reply="ALLOW">
+            <service>~/describe_parameters</service>
+            <service>~/get_parameter_types</service>
+            <service>~/get_parameters</service>
+            <service>~/get_type_description</service>
+            <service>~/list_parameters</service>
+            <service>~/set_parameters</service>
+            <service>~/set_parameters_atomically</service>
+          </services>
+          <topics subscribe="ALLOW">
+            <topic>scan</topic>
+          </topics>
+          <topics publish="ALLOW">
+            <topic>/parameter_events</topic>
+            <topic>/rosout</topic>
+            <topic>odom</topic>
+            <topic>scan</topic>
+            <topic>state</topic>
+            <topic>status</topic>
+          </topics>
+        </profile>
+      </profiles>
+    </enclave>
+  </enclaves>
+</policy>

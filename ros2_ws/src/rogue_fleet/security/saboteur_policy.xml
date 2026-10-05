@@ -1,0 +1,69 @@
+<policy version="0.2.0">
+  <!-- Scenario 6 "Saboteur" SROS2 access-control policy. The attack abuses the
+       action's cancel service (navigate_to_pose/_action/cancel_goal) on an open bus.
+       Generated from the live graph with `ros2 security generate_policy` (the reliable
+       workflow), so it covers the whole NavigateToPose action interface. Under
+       enforcement:
+         - governance sets allow_unauthenticated_participants = false, so the attacker
+           (no certificate) cannot join the bus at all;
+         - only the courier's own identity holds REQUEST rights on the action services
+           (it is its own client). No other identity may CALL cancel_goal, so a rogue
+           cancel is rejected at the middleware layer.
+       To add a legitimate external commander, give ONLY that operator profile
+       <services request="ALLOW"> on navigate_to_pose/_action/{send_goal,cancel_goal}
+       — least privilege, named service by named service. -->
+  <enclaves>
+    <enclave path="/">
+      <profiles>
+        <profile node="saboteur_bridge" ns="/">
+          <services reply="ALLOW">
+            <service>~/describe_parameters</service>
+            <service>~/get_parameter_types</service>
+            <service>~/get_parameters</service>
+            <service>~/get_type_description</service>
+            <service>~/list_parameters</service>
+            <service>~/set_parameters</service>
+            <service>~/set_parameters_atomically</service>
+          </services>
+          <topics subscribe="ALLOW">
+            <topic>/saboteur/state</topic>
+          </topics>
+          <topics publish="ALLOW">
+            <topic>parameter_events</topic>
+            <topic>rosout</topic>
+          </topics>
+        </profile>
+        <profile node="saboteur_amr" ns="/saboteur">
+          <services reply="ALLOW">
+            <service>navigate_to_pose/_action/cancel_goal</service>
+            <service>navigate_to_pose/_action/get_result</service>
+            <service>navigate_to_pose/_action/send_goal</service>
+            <service>~/describe_parameters</service>
+            <service>~/get_parameter_types</service>
+            <service>~/get_parameters</service>
+            <service>~/get_type_description</service>
+            <service>~/list_parameters</service>
+            <service>~/set_parameters</service>
+            <service>~/set_parameters_atomically</service>
+          </services>
+          <services request="ALLOW">
+            <service>navigate_to_pose/_action/cancel_goal</service>
+            <service>navigate_to_pose/_action/get_result</service>
+            <service>navigate_to_pose/_action/send_goal</service>
+          </services>
+          <topics subscribe="ALLOW">
+            <topic>navigate_to_pose/_action/feedback</topic>
+            <topic>navigate_to_pose/_action/status</topic>
+          </topics>
+          <topics publish="ALLOW">
+            <topic>/parameter_events</topic>
+            <topic>/rosout</topic>
+            <topic>navigate_to_pose/_action/feedback</topic>
+            <topic>navigate_to_pose/_action/status</topic>
+            <topic>state</topic>
+          </topics>
+        </profile>
+      </profiles>
+    </enclave>
+  </enclaves>
+</policy>

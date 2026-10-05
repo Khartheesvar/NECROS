@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# fleetctl — operator control for the AMR fleet's ROS 2 stack.
+#
+# This is the service-management layer, the kind an operator uses to run a real
+# robot deployment: start / stop / check the robot's ROS stack. It does NOT do
+# the security provisioning for you — you run the real `ros2 security` commands
+# yourself (see the defend walkthrough). fleetctl only starts the stack and, if
+# you have enabled security in the environment, the stack comes up enforced.
+#
+# Usage:
+#   fleetctl status        show whether the ROS stack is running (and if secured)
+#   fleetctl stop          stop the robot's ROS stack
+#   fleetctl start         start the ROS stack (uses whatever security env is set)
+#   fleetctl restart       stop then start
+#
+# To run SECURED: export ROS_SECURITY_ENABLE=true (+ keystore/strategy) BEFORE
+# `fleetctl start` — exactly as you would harden a real robot via environment.
+
+set -o pipefail
+source /opt/ros/jazzy/setup.bash 2>/dev/null
+[ -f /ros2_ws/install/setup.bash ] && source /ros2_ws/install/setup.bash 2>/dev/null
+
+LAUNCH="ros2 launch rogue_fleet fleet.launch.py"
+LOGFILE=/var/log/fleet.log
+PGIDFILE=/run/fleet.pgid
+# Match the launch + the node executables it spawns, but NOT this script or an
+# interactive shell. We track the launch process group id for a clean stop.
+PIDPAT="fleet.launch.py|rogue_fleet/lib/rogue_fleet"
+
+is_running() { pgrep -f "$PIDPAT" >/dev/null 2>&1; }
+
+cmd_status() {
+  if is_running; then
+    if [ "${ROS_SECURITY_ENABLE:-false}" = "true" ]; then
+      echo "fleet: RUNNING  (security: ENFORCED — SROS2 $ROS_SECURITY_STRATEGY)"
+    else
+      # best-effort: check whether the running stack was started with security
+      if pgrep -af "$PIDPAT" | grep -q . && [ -f /run/fleet.secure ]; then
+        echo "fleet: RUNNING  (security: ENFORCED — SROS2)"
+      else
+        echo "fleet: RUNNING  (security: OFF — open bus, unauthenticated)"
+      fi
+    fi
+  else
+    echo "fleet: STOPPED"
+  fi
+}
+
+cmd_stop() {
+  if is_running; then
+    echo "stopping fleet ROS stack..."
+    # Kill by the launch process group we recorded at start (clean, surgical).
+    if [ -f "$PGIDFILE" ]; then
+      kill -TERM -- "-$(cat $PGIDFILE)" 2>/dev/null
+      sleep 2
+      kill -KILL -- "-$(cat $PGIDFILE)" 2>/dev/null
+      rm -f "$PGIDFILE"
+    fi
+    # Fallback for any stragglers matching the launch/node executables only.
+    pkill -TERM -f "$PIDPAT" 2>/dev/null; sleep 1; pkill -KILL -f "$PIDPAT" 2>/dev/null
+    rm -f /run/fleet.secure
+    echo "fleet stopped."
+  else
+    echo "fleet already stopped."
+  fi
+}
+
+cmd_start() {
+  if is_running; then echo "fleet already running (use 'fleetctl restart')."; return 1; fi
+  mkdir -p "$(dirname "$LOGFILE")"
+  if [ "${ROS_SECURITY_ENABLE:-false}" = "true" ]; then
+    echo "starting fleet with SROS2 ENFORCED (keystore: ${ROS_SECURITY_KEYSTORE:-unset})..."
+    touch /run/fleet.secure
+  else
+    echo "starting fleet (open bus — no security)..."
+    rm -f /run/fleet.secure
+  fi
+  setsid $LAUNCH > "$LOGFILE" 2>&1 &
+  # Record the launch process group id so stop can target it cleanly.
+  echo $! > "$PGIDFILE"
+  sleep 6
+  if is_running; then
+    echo "fleet started.  (logs: $LOGFILE)"
+    cmd_status
+  else
+    echo "fleet FAILED to start — recent log:"; tail -8 "$LOGFILE"
+    return 1
+  fi
+}
+
+case "${1:-status}" in
+  status)  cmd_status ;;
+  stop)    cmd_stop ;;
+  start)   cmd_start ;;
+  restart) cmd_stop; cmd_start ;;
+  *) echo "usage: fleetctl {status|stop|start|restart}"; exit 1 ;;
+esac

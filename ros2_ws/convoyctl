@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# convoyctl — operator control for the Scenario 4 convoy AMR's ROS stack.
+# Mirrors fleetctl/dockctl: start/stop/status/restart. Security (defend phase) is
+# enabled the same way — provision a keystore, set ROS_SECURITY_* env, then
+# `convoyctl start`.
+source /opt/ros/jazzy/setup.bash 2>/dev/null
+[ -f /ros2_ws/install/setup.bash ] && source /ros2_ws/install/setup.bash 2>/dev/null
+
+LAUNCH="ros2 launch rogue_fleet convoy.launch.py"
+LOGFILE=/var/log/convoy.log
+PGIDFILE=/run/convoy.pgid
+PIDPAT="convoy.launch.py|rogue_fleet/lib/rogue_fleet/convoy"
+
+is_running() { pgrep -f "$PIDPAT" >/dev/null 2>&1; }
+
+case "${1:-status}" in
+  status)
+    if is_running; then
+      [ "${ROS_SECURITY_ENABLE:-false}" = "true" ] && echo "convoy: RUNNING (security: ENFORCED — SROS2)" \
+        || ([ -f /run/convoy.secure ] && echo "convoy: RUNNING (security: ENFORCED — SROS2)" || echo "convoy: RUNNING (security: OFF — open bus)")
+    else echo "convoy: STOPPED"; fi ;;
+  stop)
+    if is_running; then
+      echo "stopping convoy ROS stack..."
+      [ -f "$PGIDFILE" ] && { kill -TERM -- "-$(cat $PGIDFILE)" 2>/dev/null; sleep 2; kill -KILL -- "-$(cat $PGIDFILE)" 2>/dev/null; rm -f "$PGIDFILE"; }
+      pkill -TERM -f "$PIDPAT" 2>/dev/null; sleep 1; pkill -KILL -f "$PIDPAT" 2>/dev/null
+      rm -f /run/convoy.secure; echo "convoy stopped."
+    else echo "convoy already stopped."; fi ;;
+  start)
+    if is_running; then echo "convoy already running (use 'convoyctl restart')."; exit 1; fi
+    mkdir -p "$(dirname "$LOGFILE")"
+    if [ "${ROS_SECURITY_ENABLE:-false}" = "true" ]; then echo "starting convoy with SROS2 ENFORCED..."; touch /run/convoy.secure
+    else echo "starting convoy (open bus — no security)..."; rm -f /run/convoy.secure; fi
+    setsid $LAUNCH > "$LOGFILE" 2>&1 &
+    echo $! > "$PGIDFILE"; sleep 6
+    if is_running; then echo "convoy started. (logs: $LOGFILE)"; else echo "convoy FAILED:"; tail -8 "$LOGFILE"; exit 1; fi ;;
+  restart) "$0" stop; "$0" start ;;
+  *) echo "usage: convoyctl {status|stop|start|restart}"; exit 1 ;;
+esac

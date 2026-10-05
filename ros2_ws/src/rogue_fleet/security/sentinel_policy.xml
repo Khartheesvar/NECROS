@@ -1,0 +1,63 @@
+<policy version="0.2.0">
+  <!-- Scenario 5 "Dead Man's Switch" SROS2 access-control policy. Denial of Control is
+       abuse of PRIVILEGED services/lifecycle on an open bus. This policy was generated
+       from the live graph with `ros2 security generate_policy` (the real workflow) so
+       it covers every interface the lifecycle node actually uses (estop, change_state,
+       transition_event, ...). Under enforcement:
+         - governance sets allow_unauthenticated_participants = false, so an attacker
+           with no certificate cannot join the bus at all;
+         - the robot REPLIES to its own estop + lifecycle services, but NO profile here
+           is granted the right to REQUEST them, so a foreign caller cannot invoke them.
+       To permit legitimate control, add an explicit operator profile with <services
+       request="ALLOW"> on exactly ~/estop and ~/change_state — least privilege, by
+       name. Do NOT grant those broadly, or a "secured" robot is still one stray
+       certificate away from being switched off. -->
+  <enclaves>
+    <enclave path="/">
+      <profiles>
+        <profile node="sentinel_bridge" ns="/">
+          <services reply="ALLOW">
+            <service>~/describe_parameters</service>
+            <service>~/get_parameter_types</service>
+            <service>~/get_parameters</service>
+            <service>~/get_type_description</service>
+            <service>~/list_parameters</service>
+            <service>~/set_parameters</service>
+            <service>~/set_parameters_atomically</service>
+          </services>
+          <topics subscribe="ALLOW">
+            <topic>/sentinel/state</topic>
+          </topics>
+          <topics publish="ALLOW">
+            <topic>parameter_events</topic>
+            <topic>rosout</topic>
+          </topics>
+        </profile>
+        <profile node="sentinel_amr" ns="/sentinel">
+          <services reply="ALLOW">
+            <service>~/change_state</service>
+            <service>~/describe_parameters</service>
+            <service>~/estop</service>
+            <service>~/get_available_states</service>
+            <service>~/get_available_transitions</service>
+            <service>~/get_parameter_types</service>
+            <service>~/get_parameters</service>
+            <service>~/get_state</service>
+            <service>~/get_transition_graph</service>
+            <service>~/get_type_description</service>
+            <service>~/list_parameters</service>
+            <service>~/set_parameters</service>
+            <service>~/set_parameters_atomically</service>
+          </services>
+          <topics publish="ALLOW">
+            <topic>/parameter_events</topic>
+            <topic>/rosout</topic>
+            <topic>odom</topic>
+            <topic>state</topic>
+            <topic>~/transition_event</topic>
+          </topics>
+        </profile>
+      </profiles>
+    </enclave>
+  </enclaves>
+</policy>

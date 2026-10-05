@@ -1,0 +1,143 @@
+# NECROS · Attacking and Defending ROS 2  ·  ROS 2 / DDS training lab
+#
+# Six scenarios, each its own robot world on its own DDS domain (domain == scenario
+# number). The service name is prefixed with the scenario number so it is easy to map:
+#
+#   s1-fleet     Scenario 1 "Open Bus"          two-robot fleet + coordinator
+#   s2-dock      Scenario 2 "Blind Navigator"   dock robot with a laser scanner
+#   s3-takeover  Scenario 3 "Rogue Coordinator" fleet + coordinator (goal channel)
+#   s4-convoy    Scenario 4 "Ghost Convoy"      delivery robot reporting odometry
+#   s5-sentinel  Scenario 5 "Dead Man's Switch" patrol robot (lifecycle + e-stop)
+#   s6-saboteur  Scenario 6 "Saboteur"          courier running delivery actions
+#
+#   attacker     the Kali box the student runs every attack from
+#   backend      relays each scenario's live state to the browser
+#   frontend     the operator console at http://localhost:3000
+#
+# Quick start:
+#   docker compose up -d
+#   open http://localhost:3000
+#   docker compose exec attacker bash          # then set ROS_DOMAIN_ID to the scenario #
+
+services:
+  s1-fleet:
+    build: ./ros2_ws
+    image: necros-robots
+    container_name: s1-fleet
+    environment:
+      - ROS_DOMAIN_ID=1
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+      - PYTHONUNBUFFERED=1
+    networks: [robnet]
+    restart: unless-stopped
+
+  s2-dock:
+    build: ./ros2_ws
+    image: necros-robots
+    container_name: s2-dock
+    environment:
+      - ROS_DOMAIN_ID=2
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+      - PYTHONUNBUFFERED=1
+    command: ["/dock_boot.sh"]
+    networks: [robnet]
+    restart: unless-stopped
+
+  s3-takeover:
+    build: ./ros2_ws
+    image: necros-robots
+    container_name: s3-takeover
+    environment:
+      - ROS_DOMAIN_ID=3
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+      - BRIDGE_FEED_PORT=9102
+      - PYTHONUNBUFFERED=1
+    command: ["/takeover_boot.sh"]
+    networks: [robnet]
+    restart: unless-stopped
+
+  s4-convoy:
+    build: ./ros2_ws
+    image: necros-robots
+    container_name: s4-convoy
+    environment:
+      - ROS_DOMAIN_ID=4
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+      - BRIDGE_FEED_PORT=9103
+      - PYTHONUNBUFFERED=1
+    command: ["/convoy_boot.sh"]
+    networks: [robnet]
+    restart: unless-stopped
+
+  s5-sentinel:
+    build: ./ros2_ws
+    image: necros-robots
+    container_name: s5-sentinel
+    environment:
+      - ROS_DOMAIN_ID=5
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+      - BRIDGE_FEED_PORT=9104
+      - PYTHONUNBUFFERED=1
+    command: ["/sentinel_boot.sh"]
+    networks: [robnet]
+    restart: unless-stopped
+
+  s6-saboteur:
+    build: ./ros2_ws
+    image: necros-robots
+    container_name: s6-saboteur
+    environment:
+      - ROS_DOMAIN_ID=6
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+      - BRIDGE_FEED_PORT=9105
+      - PYTHONUNBUFFERED=1
+    command: ["/saboteur_boot.sh"]
+    networks: [robnet]
+    restart: unless-stopped
+
+  attacker:
+    build: ./attacker
+    image: necros-attacker
+    container_name: attacker
+    environment:
+      - ROS_DOMAIN_ID=1
+      - RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+      - PYTHONUNBUFFERED=1
+    networks: [robnet]
+    depends_on: [s1-fleet]
+    # Needs raw socket access for packet-capture demos.
+    cap_add: [NET_RAW, NET_ADMIN]
+    restart: unless-stopped
+
+  backend:
+    build: ./backend
+    image: necros-backend
+    container_name: backend
+    environment:
+      - BRIDGE_HOST=s1-fleet
+      - BRIDGE_PORT=9100
+      - DOCK_HOST=s2-dock
+      - TAKEOVER_HOST=s3-takeover
+      - CONVOY_HOST=s4-convoy
+      - SENTINEL_HOST=s5-sentinel
+      - SABOTEUR_HOST=s6-saboteur
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "8000:8000"
+    networks: [robnet]
+    depends_on: [s1-fleet]
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    image: necros-frontend
+    container_name: frontend
+    ports:
+      - "3000:80"
+    networks: [robnet]
+    depends_on: [backend]
+    restart: unless-stopped
+
+networks:
+  robnet:
+    driver: bridge

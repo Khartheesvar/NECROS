@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>rogue_fleet</name>
+  <version>0.1.0</version>
+  <description>
+    Rogue Node training lab — a deliberately insecure ROS 2 autonomous mobile
+    robot (AMR) fleet. Real ROS 2 nodes communicating over real DDS, used to
+    teach and demonstrate ROS 2 / DDS attack and defense. NOT for production.
+  </description>
+  <maintainer email="gkhartheesvar@ine.com">Rogue Node Lab</maintainer>
+  <license>Educational Use Only</license>
+
+  <depend>rclpy</depend>
+  <depend>std_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>nav_msgs</depend>
+  <depend>sensor_msgs</depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

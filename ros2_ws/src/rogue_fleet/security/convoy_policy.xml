@@ -1,0 +1,57 @@
+<policy version="0.2.0">
+  <!-- Scenario 4 "Ghost Convoy" SROS2 access-control policy. Generated from the live
+       graph with `ros2 security generate_policy`. Load-bearing rule: ONLY the convoy
+       robot identity (/convoy/convoy_amr) may PUBLISH odom, so under enforcement an
+       unauthenticated rosbag2_player cannot replay telemetry onto /convoy/odom, and an
+       attacker with no certificate cannot join the secured bus at all. (Replay from an
+       *authenticated* node is additionally stopped by the application-level
+       freshness/sequence check in the bridge — see the defend manual, Layer 2.)
+       The convoy exposes no external cmd_vel/goal_pose command surface: its only
+       subscription is its own /convoy/odom (internal replay detection). -->
+  <enclaves>
+    <enclave path="/">
+      <profiles>
+        <profile node="convoy_bridge" ns="/">
+          <services reply="ALLOW">
+            <service>~/describe_parameters</service>
+            <service>~/get_parameter_types</service>
+            <service>~/get_parameters</service>
+            <service>~/get_type_description</service>
+            <service>~/list_parameters</service>
+            <service>~/set_parameters</service>
+            <service>~/set_parameters_atomically</service>
+          </services>
+          <topics subscribe="ALLOW">
+            <topic>/convoy/odom</topic>
+            <topic>/convoy/state</topic>
+          </topics>
+          <topics publish="ALLOW">
+            <topic>parameter_events</topic>
+            <topic>rosout</topic>
+          </topics>
+        </profile>
+        <profile node="convoy_amr" ns="/convoy">
+          <services reply="ALLOW">
+            <service>~/describe_parameters</service>
+            <service>~/get_parameter_types</service>
+            <service>~/get_parameters</service>
+            <service>~/get_type_description</service>
+            <service>~/list_parameters</service>
+            <service>~/set_parameters</service>
+            <service>~/set_parameters_atomically</service>
+          </services>
+          <topics subscribe="ALLOW">
+            <topic>odom</topic>
+          </topics>
+          <topics publish="ALLOW">
+            <topic>/parameter_events</topic>
+            <topic>/rosout</topic>
+            <topic>odom</topic>
+            <topic>state</topic>
+            <topic>status</topic>
+          </topics>
+        </profile>
+      </profiles>
+    </enclave>
+  </enclaves>
+</policy>

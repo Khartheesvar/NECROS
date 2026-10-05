@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# sentinelctl — operator control for the Scenario 5 sentinel AMR's ROS stack.
+# Mirrors fleetctl/dockctl: start/stop/status/restart. Security (defend phase) is
+# enabled the same way — provision a keystore, set ROS_SECURITY_* env, then
+# `sentinelctl start`.
+source /opt/ros/jazzy/setup.bash 2>/dev/null
+[ -f /ros2_ws/install/setup.bash ] && source /ros2_ws/install/setup.bash 2>/dev/null
+
+LAUNCH="ros2 launch rogue_fleet sentinel.launch.py"
+LOGFILE=/var/log/sentinel.log
+PGIDFILE=/run/sentinel.pgid
+PIDPAT="sentinel.launch.py|rogue_fleet/lib/rogue_fleet/sentinel"
+
+is_running() { pgrep -f "$PIDPAT" >/dev/null 2>&1; }
+
+case "${1:-status}" in
+  status)
+    if is_running; then
+      [ "${ROS_SECURITY_ENABLE:-false}" = "true" ] && echo "sentinel: RUNNING (security: ENFORCED — SROS2)" \
+        || ([ -f /run/sentinel.secure ] && echo "sentinel: RUNNING (security: ENFORCED — SROS2)" || echo "sentinel: RUNNING (security: OFF — open bus)")
+    else echo "sentinel: STOPPED"; fi ;;
+  stop)
+    if is_running; then
+      echo "stopping sentinel ROS stack..."
+      [ -f "$PGIDFILE" ] && { kill -TERM -- "-$(cat $PGIDFILE)" 2>/dev/null; sleep 2; kill -KILL -- "-$(cat $PGIDFILE)" 2>/dev/null; rm -f "$PGIDFILE"; }
+      pkill -TERM -f "$PIDPAT" 2>/dev/null; sleep 1; pkill -KILL -f "$PIDPAT" 2>/dev/null
+      rm -f /run/sentinel.secure; echo "sentinel stopped."
+    else echo "sentinel already stopped."; fi ;;
+  start)
+    if is_running; then echo "sentinel already running (use 'sentinelctl restart')."; exit 1; fi
+    mkdir -p "$(dirname "$LOGFILE")"
+    if [ "${ROS_SECURITY_ENABLE:-false}" = "true" ]; then echo "starting sentinel with SROS2 ENFORCED..."; touch /run/sentinel.secure
+    else echo "starting sentinel (open bus — no security)..."; rm -f /run/sentinel.secure; fi
+    setsid $LAUNCH > "$LOGFILE" 2>&1 &
+    echo $! > "$PGIDFILE"; sleep 6
+    if is_running; then echo "sentinel started. (logs: $LOGFILE)"; else echo "sentinel FAILED:"; tail -8 "$LOGFILE"; exit 1; fi ;;
+  restart) "$0" stop; "$0" start ;;
+  *) echo "usage: sentinelctl {status|stop|start|restart}"; exit 1 ;;
+esac
