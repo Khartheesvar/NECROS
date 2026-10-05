@@ -18,7 +18,9 @@
 ## 🎬 Demo
 
 <p align="center">
-  <video src="assets/demo.mp4" width="820" autoplay loop muted playsinline></video>
+  
+https://github.com/user-attachments/assets/0353f6df-d2f0-4dfd-a4a5-de8e7b7761c4
+
 </p>
 
 ---
