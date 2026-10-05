@@ -3,40 +3,33 @@ import { useNavigate } from 'react-router-dom'
 import { getActs } from './scenarios.js'
 import RobotChar from './RobotChar.jsx'
 
-// NECROS landing page / level-select. Scenarios are grouped into ACTS (see
-// scenarios.js) so a player sees the shared root cause of a group, never a single
-// technique in isolation. Layout is data-driven: each act renders a titled band of
-// scenario cards that wraps, so adding scenarios or acts needs no layout changes.
-
-const ART_TONE = { live: '#34d399', soon: '#fbbf24', locked: '#64748b' }
+const ART_TONE = { live: '#39ff14', soon: '#fbbf24', locked: '#64748b' }
 
 function ScenarioCard({ s, onEnter }) {
   const live = s.status === 'live'
   return (
-    <div className={`rm-card2 ${s.status}`} style={{ '--nc': ART_TONE[s.status] }}
-      onClick={() => live && onEnter(s)} role={live ? 'button' : undefined}>
-      <div className="rm-card2-bot">
+    <button type="button" className={`rm-card2 ${s.status}`} style={{ '--nc': ART_TONE[s.status] }}
+      disabled={!live} onClick={() => live && onEnter(s)}>
+      <div className="rm-card-id">
+        <span>SCENARIO {String(s.id).padStart(2, '0')}</span>
+        <span>DDS DOMAIN {s.id}</span>
+      </div>
+      <div className="rm-card2-bot" aria-hidden="true">
         <RobotChar id={s.id} tone={ART_TONE[s.status]} size={132} />
         <span className="rm-pin-num">{s.id}</span>
         {live && <span className="rm-bot-ring" />}
       </div>
       <div className="rm-card2-body">
         <div className="rm-card-top">
-          <span className="rm-codename">{s.codename}</span>
-          <span className={`rm-status ${s.status}`}>
-            {live ? '● PLAYABLE' : '○ SOON'}
-          </span>
+          <h3 className="rm-codename">{s.codename}</h3>
+          <span className={`rm-status ${s.status}`}>{live ? '● PLAYABLE' : '○ SOON'}</span>
         </div>
         <div className="rm-taglines">{s.tagline}</div>
-        <div className="rm-detail rm-atk"><span className="rm-ico">⚔</span><b>Attack</b> {s.attack}</div>
-        <div className="rm-detail rm-def"><span className="rm-ico">🛡</span><b>Defend</b> {s.defend}</div>
-        <div className="rm-footer">
-          {live
-            ? <span className="rm-enter">ENTER →</span>
-            : <span className="rm-soon-txt">in development</span>}
-        </div>
+        <div className="rm-detail rm-atk"><span className="rm-ico" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="m3 3 10 10M13 3 3 13M2 9l5 5M9 2l5 5" /></svg></span><div><b>Attack</b> {s.attack}</div></div>
+        <div className="rm-detail rm-def"><span className="rm-ico" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="m8 2 5 2v4c0 3-5 6-5 6S3 11 3 8V4Z" /><path d="m5.5 7.5 1.7 1.7 3.3-3.4" /></svg></span><div><b>Defend</b> {s.defend}</div></div>
+        <div className="rm-footer"><span className="rm-difficulty">{s.difficulty}</span>{live ? <span className="rm-enter">ENTER →</span> : <span className="rm-soon-txt">In development</span>}</div>
       </div>
-    </div>
+    </button>
   )
 }
 
@@ -46,39 +39,45 @@ export default function Roadmap() {
   const enter = (s) => { if (s.status === 'live') navigate(`/scenario/${s.id}`) }
 
   return (
-    <div className="roadmap">
-      <header className="rm-header">
-        <div className="rm-brand">
-          <span className="rm-logo">☠ NECROS</span>
-          <span className="rm-sub">Attacking &amp; Defending ROS 2</span>
+    <div className="range-layout">
+      <a className="skip-link" href="#scenarios">Skip to scenarios</a>
+      <header className="range-header">
+        <div className="range-header-inner">
+          <a className="range-brand" href="/" aria-label="NECROS home">
+            <img className="range-brand-logo" src="/logo.png" alt="" />
+            <span>NECROS<small>Attacking &amp; Defending ROS 2</small></span>
+          </a>
+          <nav className="range-navigation" aria-label="Range navigation">
+            <a className="active" href="#scenarios">Scenarios</a>
+            {acts.map((act) => <a key={act.key} href={`#${act.key}`}>{act.title}</a>)}
+          </nav>
         </div>
-        <div className="rm-tag">ROBOT FLEET SECURITY RANGE</div>
       </header>
 
-      <p className="rm-intro">
-        A hands-on range for attacking and defending an autonomous robot fleet. Each
-        stage: a ROS&nbsp;2 / DDS attack, then the defense that stops it.
-      </p>
-
-      {acts.map((act, ai) => (
-        <section className="rm-act" key={act.key}>
-          <div className="rm-act-head">
-            <span className="rm-act-label">{act.label}</span>
-            <h2 className="rm-act-title">{act.title}</h2>
-            <span className="rm-act-rule" />
+      <main className="roadmap" id="scenarios">
+        <div className="range-intro">
+          <div>
+            <h1>Scenarios</h1>
+            <p>Select a robot console to explore the attack and apply its defense.</p>
           </div>
-          {act.summary && <p className="rm-act-summary">{act.summary}</p>}
-          <div className="rm-act-grid">
-            {act.scenarios.map((s) => (
-              <ScenarioCard key={s.id} s={s} onEnter={enter} />
-            ))}
-          </div>
-        </section>
-      ))}
+          <span className="scenario-count">{acts.reduce((total, act) => total + act.scenarios.length, 0)} scenarios <span>·</span> {acts.length} modules</span>
+        </div>
 
-      <footer className="rm-foot">
-        ROS 2 Jazzy · DDS · SROS2
-      </footer>
+        {acts.map((act) => (
+          <section className="rm-act" id={act.key} key={act.key} aria-labelledby={`title-${act.key}`}>
+            <div className="rm-act-head">
+              <div>
+                <span className="rm-act-label">{act.label}</span>
+                <h2 className="rm-act-title" id={`title-${act.key}`}>{act.title}</h2>
+                <p className="rm-act-summary">{act.summary}</p>
+              </div>
+              <span className="module-total">{String(act.scenarios.length).padStart(2, '0')} scenarios</span>
+            </div>
+            <div className="rm-act-grid">{act.scenarios.map((s) => <ScenarioCard key={s.id} s={s} onEnter={enter} />)}</div>
+          </section>
+        ))}
+        <footer className="rm-foot"><span>NECROS · ROS 2 Jazzy · DDS · SROS 2</span><span>Attacking &amp; Defending ROS 2</span></footer>
+      </main>
     </div>
   )
 }

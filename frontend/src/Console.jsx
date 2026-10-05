@@ -1,3 +1,4 @@
+import { uiText } from './uiText.js'
 import React, { useEffect, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { io } from 'socket.io-client'
@@ -22,8 +23,8 @@ function StatusTile({ name, gt, meta }) {
         </span>
       </div>
       <div className="tile-metrics">
-        <span>pos <b>{gt ? `${gt.x.toFixed(1)}, ${gt.y.toFixed(1)}` : '—'}</b></span>
-        <span>vel <b>{gt ? `${gt.v.toFixed(2)}` : '—'}</b> m/s</span>
+        <span>pos <b>{gt ? `${gt.x.toFixed(1)}, ${gt.y.toFixed(1)}` : 'N/A'}</b></span>
+        <span>vel <b>{gt ? `${gt.v.toFixed(2)}` : 'N/A'}</b> m/s</span>
         <span>dev <b className={bad ? 'bad' : ''}>{meta.dev ?? 0}</b> m</span>
       </div>
     </div>
@@ -34,7 +35,7 @@ function BusPanel({ graph, secured }) {
   const nodes = graph?.nodes || []
   const topics = graph?.topics || []
   return (
-    <div className="panel-title">DDS Bus {secured && <span className="bus-secured">🔒 secured</span>}
+    <div className="panel-title">DDS Bus {secured && <span className="bus-secured">secured</span>}
       <div className="bus">
         <div className="bus-sub">nodes on the bus</div>
         {nodes.map((n) => (
@@ -69,7 +70,7 @@ function EventFeed({ events }) {
         {(events || []).map((e, i) => (
           <div key={i} className={`feed-row ${e.level}`}>
             <span className="feed-t">{e.t}</span>
-            <span className="feed-text">{e.text}</span>
+            <span className="feed-text">{uiText(e.text)}</span>
           </div>
         ))}
         {(!events || events.length === 0) && <div className="feed-row info"><span className="feed-text">no events yet…</span></div>}
@@ -128,12 +129,13 @@ export default function Console() {
       <header className="topbar">
         <Link to="/" className="back-link" title="Back to scenarios">←</Link>
         <div className="brand">
+          <img className="app-logo" src="/logo.png" alt="" />
           <span className="logo">NECROS</span>
           <span className="subtitle">Attacking &amp; Defending ROS 2</span>
         </div>
         <div className="scen">SCENARIO {scenario.id} · {scenario.codename}</div>
         <div className={`secbadge ${secured ? 'on' : 'off'}`}>
-          {secured ? '🔒 SROS2 ENFORCED' : '🔓 OPEN BUS'}
+          {secured ? 'SROS2 ENFORCED' : 'OPEN BUS'}
         </div>
         <div className={`conn ${connected ? 'up' : 'down'}`}>
           {connected ? '● LIVE' : '○ OFFLINE'}
@@ -141,18 +143,18 @@ export default function Console() {
       </header>
 
       <div className={`mission ${missionOpen ? 'open' : 'closed'}`}>
-        <button className="mission-toggle" onClick={() => setMissionOpen((o) => !o)}>
-          <span className="mission-chip">MISSION</span>
+        <button className="mission-toggle" aria-expanded={missionOpen} onClick={() => setMissionOpen((o) => !o)}>
+          <span className="mission-chip">Mission brief</span>
           <span className="mission-caret">{missionOpen ? '▾' : '▸'}</span>
         </button>
         {missionOpen && (
           <div className="mission-body">
             <div className="mission-line">
-              <span className="mission-tag atk">⚔ ATTACK</span>
+              <span className="mission-tag atk">ATTACK</span>
               Seize control of a patrolling robot and drive it off its route, without being the coordinator.
             </div>
             <div className="mission-line">
-              <span className="mission-tag def">🛡 DEFEND</span>
+              <span className="mission-tag def">DEFEND</span>
               Harden the fleet with SROS2 so your injected commands are rejected.
             </div>
           </div>
@@ -161,13 +163,13 @@ export default function Console() {
 
       {secured && (
         <div className="defend-banner">
-          🔒 FLEET HARDENED — SROS2 enforced: authentication + encryption + access control. Unauthorized nodes are rejected.
+          FLEET HARDENED: SROS2 enforced: authentication + encryption + access control. Unauthorized nodes are rejected.
         </div>
       )}
 
       {anyCompromised && !secured && (
         <div className="alert-banner">
-          ⚠ FLEET COMPROMISED — unauthorized <code>cmd_vel</code> control detected on the DDS bus
+          ⚠ FLEET COMPROMISED: unauthorized <code>cmd_vel</code> control detected on the DDS bus
         </div>
       )}
 

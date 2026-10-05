@@ -1,3 +1,4 @@
+import { uiText } from './uiText.js'
 import React, { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { io } from 'socket.io-client'
@@ -38,12 +39,13 @@ export default function DockConsole() {
       <header className="topbar">
         <Link to="/" className="back-link" title="Back to scenarios">←</Link>
         <div className="brand">
+          <img className="app-logo" src="/logo.png" alt="" />
           <span className="logo">NECROS</span>
           <span className="subtitle">Attacking &amp; Defending ROS 2</span>
         </div>
         <div className="scen">SCENARIO {scenario.id} · {scenario.codename}</div>
         <div className={`secbadge ${secured ? 'on' : 'off'}`}>
-          {secured ? '🔒 SROS2 ENFORCED' : '🔓 OPEN BUS'}
+          {secured ? 'SROS2 ENFORCED' : 'OPEN BUS'}
         </div>
         <div className={`conn ${connected ? 'up' : 'down'}`}>
           {connected ? '● LIVE' : '○ OFFLINE'}
@@ -51,18 +53,18 @@ export default function DockConsole() {
       </header>
 
       <div className={`mission ${missionOpen ? 'open' : 'closed'}`}>
-        <button className="mission-toggle" onClick={() => setMissionOpen((o) => !o)}>
-          <span className="mission-chip">MISSION</span>
+        <button className="mission-toggle" aria-expanded={missionOpen} onClick={() => setMissionOpen((o) => !o)}>
+          <span className="mission-chip">Mission brief</span>
           <span className="mission-caret">{missionOpen ? '▾' : '▸'}</span>
         </button>
         {missionOpen && (
           <div className="mission-body">
             <div className="mission-line">
-              <span className="mission-tag atk">⚔ ATTACK</span>
+              <span className="mission-tag atk">ATTACK</span>
               Make the robot crash without touching its motors.
             </div>
             <div className="mission-line">
-              <span className="mission-tag def">🛡 DEFEND</span>
+              <span className="mission-tag def">DEFEND</span>
               Authenticate the sensor topic with SROS2 so forged readings are rejected.
             </div>
           </div>
@@ -71,12 +73,12 @@ export default function DockConsole() {
 
       {collided && (
         <div className="alert-banner">
-          ⚠ COLLISION — robot drove into a real obstacle while blinded by spoofed <code>/scan</code>
+          ⚠ COLLISION: robot drove into a real obstacle while blinded by spoofed <code>/scan</code>
         </div>
       )}
       {deceived && !collided && (
-        <div className="alert-banner" style={{ background: 'rgba(251,191,36,0.12)', borderColor: '#fbbf24', color: '#fde68a' }}>
-          ⚠ PERCEPTION SPOOFED — the robot believes the path is clear, but an obstacle is really ahead
+        <div className="alert-banner alert-warning">
+          ⚠ PERCEPTION SPOOFED: the robot believes the path is clear, but an obstacle is really ahead
         </div>
       )}
 
@@ -87,10 +89,9 @@ export default function DockConsole() {
           </div>
           <div className="dock-view dock-view-solo">
             <div className="dock-view-head">
-              <span className="dock-view-title" style={{ color: TONE }}>Loading Dock — Live</span>
               <span className="dock-view-sub">
                 {deceived || collided
-                  ? 'robot navigating on SPOOFED /scan — perception compromised'
+                  ? 'robot navigating on SPOOFED /scan: perception compromised'
                   : 'robot navigating on its real LIDAR /scan'}
               </span>
             </div>
@@ -98,7 +99,7 @@ export default function DockConsole() {
           </div>
           <div className="dock-legend">
             <span className="muted">drag to rotate · scroll to zoom</span>
-            <span className="muted">spoofing the /scan topic blinds the robot — it drives into obstacles it can no longer "see"</span>
+            <span className="muted">spoofing the /scan topic blinds the robot, causing it to drive into obstacles it can no longer "see"</span>
           </div>
         </section>
 
@@ -114,8 +115,8 @@ export default function DockConsole() {
                 </span>
               </div>
               <div className="tile-metrics">
-                <span>real <b>{scene.true ? `${scene.true.x}, ${scene.true.y}` : '—'}</b></span>
-                <span>believes clear: <b>{String(scene.believed_clear_ahead ?? '—')}</b></span>
+                <span>real <b>{scene.true ? `${scene.true.x}, ${scene.true.y}` : 'N/A'}</b></span>
+                <span>believes clear: <b>{String(scene.believed_clear_ahead ?? 'N/A')}</b></span>
               </div>
               <div className="tile-metrics">
                 <span>obstacle really ahead: <b className={scene.real_obstacle_ahead != null ? 'bad' : ''}>
@@ -125,7 +126,7 @@ export default function DockConsole() {
           </div>
 
           <div className="side-panel">
-            <div className="panel-title">DDS Bus {secured && <span className="bus-secured">🔒 secured</span>}
+            <div className="panel-title">DDS Bus {secured && <span className="bus-secured">secured</span>}
               <div className="bus">
                 <div className="bus-sub">nodes on the bus</div>
                 {nodes.map((n) => (
@@ -153,7 +154,7 @@ export default function DockConsole() {
               <div className="feed">
                 {(dock.events || []).map((e, i) => (
                   <div key={i} className={`feed-row ${e.level}`}>
-                    <span className="feed-t">{e.t}</span><span className="feed-text">{e.text}</span>
+                    <span className="feed-t">{e.t}</span><span className="feed-text">{uiText(e.text)}</span>
                   </div>
                 ))}
                 {(!dock.events || dock.events.length === 0) &&

@@ -1,3 +1,4 @@
+import { uiText } from './uiText.js'
 import React, { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { io } from 'socket.io-client'
@@ -45,12 +46,13 @@ export default function SentinelConsole() {
       <header className="topbar">
         <Link to="/" className="back-link" title="Back to scenarios">←</Link>
         <div className="brand">
+          <img className="app-logo" src="/logo.png" alt="" />
           <span className="logo">NECROS</span>
           <span className="subtitle">Attacking &amp; Defending ROS 2</span>
         </div>
         <div className="scen">SCENARIO {scenario.id} · {scenario.codename}</div>
         <div className={`secbadge ${secured ? 'on' : 'off'}`}>
-          {secured ? '🔒 SROS2 ENFORCED' : '🔓 OPEN BUS'}
+          {secured ? 'SROS2 ENFORCED' : 'OPEN BUS'}
         </div>
         <div className={`conn ${connected ? 'up' : 'down'}`}>
           {connected ? '● LIVE' : '○ OFFLINE'}
@@ -58,18 +60,18 @@ export default function SentinelConsole() {
       </header>
 
       <div className={`mission ${missionOpen ? 'open' : 'closed'}`}>
-        <button className="mission-toggle" onClick={() => setMissionOpen((o) => !o)}>
-          <span className="mission-chip">MISSION</span>
+        <button className="mission-toggle" aria-expanded={missionOpen} onClick={() => setMissionOpen((o) => !o)}>
+          <span className="mission-chip">Mission brief</span>
           <span className="mission-caret">{missionOpen ? '▾' : '▸'}</span>
         </button>
         {missionOpen && (
           <div className="mission-body">
             <div className="mission-line">
-              <span className="mission-tag atk">⚔ ATTACK</span>
+              <span className="mission-tag atk">ATTACK</span>
               Take a healthy patrol robot out of service without crashing it.
             </div>
             <div className="mission-line">
-              <span className="mission-tag def">🛡 DEFEND</span>
+              <span className="mission-tag def">DEFEND</span>
               Lock its control interfaces to authorized identities with SROS2.
             </div>
           </div>
@@ -78,17 +80,17 @@ export default function SentinelConsole() {
 
       {estopped && !secured && (
         <div className="alert-banner">
-          ⚠ EMERGENCY STOP engaged via unauthenticated service call — the sentinel is halted (denial of control)
+          ⚠ EMERGENCY STOP engaged via unauthenticated service call: the sentinel is halted (denial of control)
         </div>
       )}
       {down && !estopped && !secured && (
         <div className="alert-banner">
-          ⚠ NODE FORCED INACTIVE via lifecycle transition — control has been removed; the sentinel is frozen
+          ⚠ NODE FORCED INACTIVE via lifecycle transition: control has been removed; the sentinel is frozen
         </div>
       )}
       {secured && (
         <div className="defend-banner">
-          🔒 CONTROL HARDENED — SROS2: the e-stop + lifecycle services reject unauthorized callers.
+          CONTROL HARDENED: SROS2 rejects unauthorized callers of the e-stop and lifecycle services.
         </div>
       )}
 
@@ -101,7 +103,7 @@ export default function SentinelConsole() {
             <Sentinel3D scene={scene} />
           </div>
           <div className="map-legend">
-            <span><i className="dot" style={{ background: statusColor }} /> sentinel ({status})</span>
+            <span><i className="dot" style={{ background: statusColor }} /> sentinel ({uiText(status)})</span>
             <span className="muted">drag to orbit · scroll to zoom</span>
           </div>
         </section>
@@ -118,18 +120,18 @@ export default function SentinelConsole() {
                 </span>
               </div>
               <div className="tile-metrics">
-                <span>lifecycle <b>{scene.lifecycle || '—'}</b></span>
+                <span>lifecycle <b>{scene.lifecycle || 'N/A'}</b></span>
                 <span>e-stop <b style={{ color: estopped ? DANGER : undefined }}>{estopped ? 'ENGAGED' : 'clear'}</b></span>
               </div>
               <div className="tile-metrics">
-                <span>pos <b>{pose.x !== undefined ? `${pose.x}, ${pose.y}` : '—'}</b></span>
-                <span>vel <b>{pose.v !== undefined ? pose.v : '—'}</b> m/s</span>
+                <span>pos <b>{pose.x !== undefined ? `${pose.x}, ${pose.y}` : 'N/A'}</b></span>
+                <span>vel <b>{pose.v !== undefined ? pose.v : 'N/A'}</b> m/s</span>
               </div>
             </div>
           </div>
 
           <div className="side-panel">
-            <div className="panel-title">DDS Bus {secured && <span className="bus-secured">🔒 secured</span>}
+            <div className="panel-title">DDS Bus {secured && <span className="bus-secured">secured</span>}
               <div className="bus">
                 <div className="bus-sub">nodes on the bus</div>
                 {nodes.map((n) => (
@@ -165,7 +167,7 @@ export default function SentinelConsole() {
               <div className="feed">
                 {(sentinel.events || []).map((e, i) => (
                   <div key={i} className={`feed-row ${e.level}`}>
-                    <span className="feed-t">{e.t}</span><span className="feed-text">{e.text}</span>
+                    <span className="feed-t">{e.t}</span><span className="feed-text">{uiText(e.text)}</span>
                   </div>
                 ))}
                 {(!sentinel.events || sentinel.events.length === 0) &&

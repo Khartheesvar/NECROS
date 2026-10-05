@@ -1,3 +1,4 @@
+import { uiText } from './uiText.js'
 import React, { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { io } from 'socket.io-client'
@@ -51,14 +52,15 @@ export default function ConvoyConsole() {
       <header className="topbar">
         <Link to="/" className="back-link" title="Back to scenarios">←</Link>
         <div className="brand">
+          <img className="app-logo" src="/logo.png" alt="" />
           <span className="logo">NECROS</span>
           <span className="subtitle">Attacking &amp; Defending ROS 2</span>
         </div>
         <div className="scen">SCENARIO {scenario.id} · {scenario.codename}</div>
         <div className={`secbadge ${secured || freshnessOn ? 'on' : 'off'}`}>
-          {secured && freshnessOn ? '🔒 SROS2 + FRESHNESS'
-            : secured ? '🔒 SROS2 ENFORCED'
-            : freshnessOn ? '🔒 FRESHNESS CHECK' : '🔓 OPEN BUS'}
+          {secured && freshnessOn ? 'SROS2 + FRESHNESS'
+            : secured ? 'SROS2 ENFORCED'
+            : freshnessOn ? 'FRESHNESS CHECK' : 'OPEN BUS'}
         </div>
         <div className={`conn ${connected ? 'up' : 'down'}`}>
           {connected ? '● LIVE' : '○ OFFLINE'}
@@ -66,18 +68,18 @@ export default function ConvoyConsole() {
       </header>
 
       <div className={`mission ${missionOpen ? 'open' : 'closed'}`}>
-        <button className="mission-toggle" onClick={() => setMissionOpen((o) => !o)}>
-          <span className="mission-chip">MISSION</span>
+        <button className="mission-toggle" aria-expanded={missionOpen} onClick={() => setMissionOpen((o) => !o)}>
+          <span className="mission-chip">Mission brief</span>
           <span className="mission-caret">{missionOpen ? '▾' : '▸'}</span>
         </button>
         {missionOpen && (
           <div className="mission-body">
             <div className="mission-line">
-              <span className="mission-tag atk">⚔ ATTACK</span>
+              <span className="mission-tag atk">ATTACK</span>
               Freeze the operator's view on a lie while the convoy moves, forging nothing.
             </div>
             <div className="mission-line">
-              <span className="mission-tag def">🛡 DEFEND</span>
+              <span className="mission-tag def">DEFEND</span>
               Reject stale, replayed telemetry with freshness validation and SROS2.
             </div>
           </div>
@@ -86,17 +88,17 @@ export default function ConvoyConsole() {
 
       {spoofed && (
         <div className="alert-banner">
-          ⚠ TELEMETRY SPOOFED — the operator view is frozen on replayed /odom; the real convoy has moved {gap} m away
+          ⚠ TELEMETRY SPOOFED: the operator view is frozen on replayed /odom; the real convoy has moved {gap} m away
         </div>
       )}
       {replaying && !spoofed && (
-        <div className="alert-banner" style={{ background: '#5a4a1a' }}>
-          ⚠ REPLAY PUBLISHER DETECTED — a second node is publishing /convoy/odom (captured telemetry)
+        <div className="alert-banner alert-warning">
+          ⚠ REPLAY PUBLISHER DETECTED: a second node is publishing /convoy/odom (captured telemetry)
         </div>
       )}
       {(secured || defended) && (
         <div className="defend-banner">
-          🔒 TELEMETRY HARDENED — {secured && 'SROS2 access control'}{secured && freshnessOn && ' + '}
+          TELEMETRY HARDENED: {secured && 'SROS2 access control'}{secured && freshnessOn && ' + '}
           {freshnessOn && `freshness/sequence validation (${rejected} replayed samples rejected)`}: stale replayed /odom is dropped, the operator view stays truthful.
         </div>
       )}
@@ -128,8 +130,8 @@ export default function ConvoyConsole() {
                 </span>
               </div>
               <div className="tile-metrics">
-                <span>real pos <b>{gt.x !== undefined ? `${gt.x}, ${gt.y}` : '—'}</b></span>
-                <span>reported <b>{rep.x !== undefined ? `${rep.x}, ${rep.y}` : '—'}</b></span>
+                <span>real pos <b>{gt.x !== undefined ? `${gt.x}, ${gt.y}` : 'N/A'}</b></span>
+                <span>reported <b>{rep.x !== undefined ? `${rep.x}, ${rep.y}` : 'N/A'}</b></span>
               </div>
               <div className="tile-metrics">
                 <span>gap <b style={{ color: spoofed ? DANGER : undefined }}>{gap} m</b></span>
@@ -145,7 +147,7 @@ export default function ConvoyConsole() {
           </div>
 
           <div className="side-panel">
-            <div className="panel-title">DDS Bus {secured && <span className="bus-secured">🔒 secured</span>}
+            <div className="panel-title">DDS Bus {secured && <span className="bus-secured">secured</span>}
               <div className="bus">
                 <div className="bus-sub">nodes on the bus</div>
                 {nodes.map((n) => (
@@ -177,7 +179,7 @@ export default function ConvoyConsole() {
               <div className="feed">
                 {(convoy.events || []).map((e, i) => (
                   <div key={i} className={`feed-row ${e.level}`}>
-                    <span className="feed-t">{e.t}</span><span className="feed-text">{e.text}</span>
+                    <span className="feed-t">{e.t}</span><span className="feed-text">{uiText(e.text)}</span>
                   </div>
                 ))}
                 {(!convoy.events || convoy.events.length === 0) &&

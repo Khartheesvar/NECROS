@@ -1,0 +1,45 @@
+@font-face { font-family: Lato; font-style: normal; font-weight: 400; font-display: swap; src: url('/fonts/lato-regular.ttf') format('truetype'); }
+@font-face { font-family: Lato; font-style: normal; font-weight: 700; font-display: swap; src: url('/fonts/lato-bold.ttf') format('truetype'); }
+@font-face { font-family: Lato; font-style: normal; font-weight: 900; font-display: swap; src: url('/fonts/lato-black.ttf') format('truetype'); }
+/* Dark operator surfaces with neon accents. */
+:root {
+  color-scheme: dark;
+  --sans: Lato, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
+  --neon-red-rgb: 255, 49, 49;
+  --neon-red: rgb(var(--neon-red-rgb));
+  --bg: #080c0e;
+  --panel: #12181b;
+  --panel-2: #1d2528;
+  --border: #2e3a3d;
+  --border-strong: #5b7570;
+  --text: #edf3f0;
+  --muted: #a7b5af;
+  --accent: #39ff14;
+  --button: #edf3f0;
+  --button-text: #12181b;
+  --accent-bg: #142f10;
+  --danger: var(--neon-red);
+  --danger-bg: rgba(var(--neon-red-rgb), .07);
+  --danger-border: rgba(var(--neon-red-rgb), .4);
+  --danger-glow: 0 0 12px rgba(var(--neon-red-rgb), .12);
+  --ok: #39ff14;
+  --ok-bg: #13270f;
+  --ok-border: #396b2d;
+  --warn: #e7c078;
+  --warn-bg: #352d20;
+  --warn-border: #715d37;
+  --grid-line: #39ff1406;
+  --robot-glow: #39ff1415;
+  --neon-glow: 0 0 14px #39ff1430;
+  --card-shadow: #00000026;
+  --card-background: linear-gradient(155deg, #151e20, #101619);
+  --card-stage-inner: #39ff140a;
+  --card-stage-outer: transparent;
+  --card-stage-border: transparent;
+  --robot-shadow: #00000080;
+  --card-button-bg: #11230d;
+  --card-button-text: #39ff14;
+  --card-button-border: #39ff1480;
+  --card-button-shadow: 0 0 12px #39ff1414;
+}

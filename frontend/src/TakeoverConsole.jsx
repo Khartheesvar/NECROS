@@ -1,3 +1,4 @@
+import { uiText } from './uiText.js'
 import React, { useEffect, useRef, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import { io } from 'socket.io-client'
@@ -60,12 +61,13 @@ export default function TakeoverConsole() {
       <header className="topbar">
         <Link to="/" className="back-link" title="Back to scenarios">←</Link>
         <div className="brand">
+          <img className="app-logo" src="/logo.png" alt="" />
           <span className="logo">NECROS</span>
           <span className="subtitle">Attacking &amp; Defending ROS 2</span>
         </div>
         <div className="scen">SCENARIO {scenario.id} · {scenario.codename}</div>
         <div className={`secbadge ${secured ? 'on' : 'off'}`}>
-          {secured ? '🔒 SROS2 ENFORCED' : '🔓 OPEN BUS'}
+          {secured ? 'SROS2 ENFORCED' : 'OPEN BUS'}
         </div>
         <div className={`conn ${connected ? 'up' : 'down'}`}>
           {connected ? '● LIVE' : '○ OFFLINE'}
@@ -73,18 +75,18 @@ export default function TakeoverConsole() {
       </header>
 
       <div className={`mission ${missionOpen ? 'open' : 'closed'}`}>
-        <button className="mission-toggle" onClick={() => setMissionOpen((o) => !o)}>
-          <span className="mission-chip">MISSION</span>
+        <button className="mission-toggle" aria-expanded={missionOpen} onClick={() => setMissionOpen((o) => !o)}>
+          <span className="mission-chip">Mission brief</span>
           <span className="mission-caret">{missionOpen ? '▾' : '▸'}</span>
         </button>
         {missionOpen && (
           <div className="mission-body">
             <div className="mission-line">
-              <span className="mission-tag atk">⚔ ATTACK</span>
+              <span className="mission-tag atk">ATTACK</span>
               Command the whole fleet by impersonating its coordinator.
             </div>
             <div className="mission-line">
-              <span className="mission-tag def">🛡 DEFEND</span>
+              <span className="mission-tag def">DEFEND</span>
               Bind goal-publishing to the coordinator's identity with SROS2 access control.
             </div>
           </div>
@@ -93,12 +95,12 @@ export default function TakeoverConsole() {
 
       {imp && (
         <div className="alert-banner">
-          ⚠ COORDINATOR IMPERSONATION — a rogue node is issuing fleet goals; the robots are obeying the attacker
+          ⚠ COORDINATOR IMPERSONATION: a rogue node is issuing fleet goals; the robots are obeying the attacker
         </div>
       )}
       {secured && (
         <div className="defend-banner">
-          🔒 FLEET HARDENED — SROS2 enforced: only the authenticated coordinator may publish goals. Rogue goals are rejected.
+          FLEET HARDENED: SROS2 enforced: only the authenticated coordinator may publish goals. Rogue goals are rejected.
         </div>
       )}
 
@@ -135,8 +137,8 @@ export default function TakeoverConsole() {
                     </span>
                   </div>
                   <div className="tile-metrics">
-                    <span>pos <b>{gt ? `${gt.x.toFixed(1)}, ${gt.y.toFixed(1)}` : '—'}</b></span>
-                    <span>vel <b>{gt ? gt.v.toFixed(2) : '—'}</b> m/s</span>
+                    <span>pos <b>{gt ? `${gt.x.toFixed(1)}, ${gt.y.toFixed(1)}` : 'N/A'}</b></span>
+                    <span>vel <b>{gt ? gt.v.toFixed(2) : 'N/A'}</b> m/s</span>
                   </div>
                 </div>
               )
@@ -144,7 +146,7 @@ export default function TakeoverConsole() {
           </div>
 
           <div className="side-panel">
-            <div className="panel-title">DDS Bus {secured && <span className="bus-secured">🔒 secured</span>}
+            <div className="panel-title">DDS Bus {secured && <span className="bus-secured">secured</span>}
               <div className="bus">
                 <div className="bus-sub">nodes on the bus</div>
                 {nodes.map((n) => (
@@ -176,7 +178,7 @@ export default function TakeoverConsole() {
               <div className="feed">
                 {(state.events || []).map((e, i) => (
                   <div key={i} className={`feed-row ${e.level}`}>
-                    <span className="feed-t">{e.t}</span><span className="feed-text">{e.text}</span>
+                    <span className="feed-t">{e.t}</span><span className="feed-text">{uiText(e.text)}</span>
                   </div>
                 ))}
                 {(!state.events || state.events.length === 0) &&
